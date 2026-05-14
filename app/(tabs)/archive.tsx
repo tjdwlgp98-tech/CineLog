@@ -1,5 +1,5 @@
 import { MovieDetailSheet } from "../../components/MovieDetailSheet";
-import { colors, radius, spacing, typography } from "../../constants/theme";
+import { Colors, useColors, radius, spacing, typography } from "../../constants/theme";
 import type { Movie } from "../../store/movies";
 import { useMoviesStore } from "../../store/movies";
 import { useMemo, useState } from "react";
@@ -27,6 +27,8 @@ function formatDate(iso: string): string {
 export default function ArchiveScreen() {
   const movies = useMoviesStore((s) => s.movies);
   const [selected, setSelected] = useState<Movie | null>(null);
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const archived = useMemo(
     () =>
@@ -47,7 +49,7 @@ export default function ArchiveScreen() {
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <Text style={styles.empty}>
-            Nothing archived. Open a film and choose “Move to archive”.
+            Nothing archived. Open a film and choose "Move to archive".
           </Text>
         }
         renderItem={({ item }) => (
@@ -68,41 +70,43 @@ export default function ArchiveScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  list: {
-    padding: spacing.md,
-    paddingBottom: spacing.xl,
-    flexGrow: 1,
-  },
-  empty: {
-    ...typography.body,
-    color: colors.textMuted,
-    textAlign: "center",
-    marginTop: spacing.xl,
-    paddingHorizontal: spacing.lg,
-  },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  cardPressed: {
-    opacity: 0.9,
-  },
-  cardTitle: {
-    ...typography.subtitle,
-    color: colors.text,
-    marginBottom: spacing.xs,
-  },
-  cardMeta: {
-    ...typography.caption,
-    color: colors.textMuted,
-  },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    list: {
+      padding: spacing.md,
+      paddingBottom: spacing.xl,
+      flexGrow: 1,
+    },
+    empty: {
+      ...typography.body,
+      color: c.textSecondary,
+      textAlign: "center",
+      marginTop: spacing.xl,
+      paddingHorizontal: spacing.lg,
+    },
+    card: {
+      backgroundColor: c.surface,
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: c.border,
+      padding: spacing.md,
+      marginBottom: spacing.sm,
+    },
+    cardPressed: {
+      opacity: 0.9,
+    },
+    cardTitle: {
+      ...typography.subtitle,
+      color: c.text,
+      marginBottom: spacing.xs,
+    },
+    cardMeta: {
+      ...typography.caption,
+      color: c.textSecondary,
+    },
+  });
+}

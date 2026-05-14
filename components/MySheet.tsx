@@ -1,5 +1,5 @@
-import { colors, radius, spacing, typography } from "../constants/theme";
-import { ReactNode } from "react";
+import { Colors, useColors, radius, spacing, typography } from "../constants/theme";
+import { ReactNode, useMemo } from "react";
 import {
   Modal,
   Pressable,
@@ -20,6 +20,8 @@ type MySheetProps = {
 export function MySheet({ visible, onClose, title, children }: MySheetProps) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const maxHeight = Math.min(height * 0.88, height - insets.top - spacing.md);
 
   return (
@@ -51,31 +53,33 @@ export function MySheet({ visible, onClose, title, children }: MySheetProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    justifyContent: "flex-end",
-    backgroundColor: "rgba(0,0,0,0.55)",
-  },
-  sheet: {
-    backgroundColor: colors.surfaceElevated,
-    borderTopLeftRadius: radius.lg,
-    borderTopRightRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.sm,
-  },
-  handle: {
-    alignSelf: "center",
-    width: 40,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: colors.border,
-    marginBottom: spacing.md,
-  },
-  title: {
-    color: colors.text,
-    marginBottom: spacing.md,
-  },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      justifyContent: "flex-end",
+      backgroundColor: "rgba(0,0,0,0.55)",
+    },
+    sheet: {
+      backgroundColor: c.surfaceElevated,
+      borderTopLeftRadius: radius.lg,
+      borderTopRightRadius: radius.lg,
+      borderWidth: 1,
+      borderColor: c.border,
+      paddingHorizontal: spacing.lg,
+      paddingTop: spacing.sm,
+    },
+    handle: {
+      alignSelf: "center",
+      width: 40,
+      height: 4,
+      borderRadius: 2,
+      backgroundColor: c.border,
+      marginBottom: spacing.md,
+    },
+    title: {
+      color: c.text,
+      marginBottom: spacing.md,
+    },
+  });
+}

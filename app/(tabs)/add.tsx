@@ -1,7 +1,7 @@
-import { colors, radius, spacing, typography } from "../../constants/theme";
+import { Colors, useColors, radius, spacing, typography } from "../../constants/theme";
 import { useMoviesStore } from "../../store/movies";
 import { useRouter } from "expo-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -28,6 +28,8 @@ export default function AddScreen() {
   const [rating, setRating] = useState("");
   const [notes, setNotes] = useState("");
   const [watchedAt, setWatchedAt] = useState(todayIsoDate());
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const submit = () => {
     const t = title.trim();
@@ -65,7 +67,7 @@ export default function AddScreen() {
           value={title}
           onChangeText={setTitle}
           placeholder="Film title"
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={colors.textTertiary}
           style={styles.input}
         />
         <Text style={styles.label}>Director (optional)</Text>
@@ -73,7 +75,7 @@ export default function AddScreen() {
           value={director}
           onChangeText={setDirector}
           placeholder="Director"
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={colors.textTertiary}
           style={styles.input}
         />
         <Text style={styles.label}>Year (optional)</Text>
@@ -81,7 +83,7 @@ export default function AddScreen() {
           value={year}
           onChangeText={setYear}
           placeholder="e.g. 2024"
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={colors.textTertiary}
           keyboardType="number-pad"
           style={styles.input}
         />
@@ -90,7 +92,7 @@ export default function AddScreen() {
           value={rating}
           onChangeText={setRating}
           placeholder="1 to 5"
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={colors.textTertiary}
           keyboardType="number-pad"
           style={styles.input}
         />
@@ -99,7 +101,7 @@ export default function AddScreen() {
           value={watchedAt}
           onChangeText={setWatchedAt}
           placeholder={todayIsoDate()}
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={colors.textTertiary}
           autoCapitalize="none"
           style={styles.input}
         />
@@ -108,7 +110,7 @@ export default function AddScreen() {
           value={notes}
           onChangeText={setNotes}
           placeholder="Thoughts, venue, who with…"
-          placeholderTextColor={colors.textMuted}
+          placeholderTextColor={colors.textTertiary}
           multiline
           style={[styles.input, styles.inputMultiline]}
         />
@@ -128,52 +130,54 @@ export default function AddScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  form: {
-    padding: spacing.md,
-    paddingBottom: spacing.xl,
-  },
-  label: {
-    ...typography.caption,
-    color: colors.textMuted,
-    marginBottom: spacing.xs,
-    marginTop: spacing.sm,
-  },
-  input: {
-    ...typography.body,
-    color: colors.text,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-  },
-  inputMultiline: {
-    minHeight: 100,
-    textAlignVertical: "top",
-    paddingTop: spacing.sm,
-  },
-  submit: {
-    marginTop: spacing.lg,
-    backgroundColor: colors.accent,
-    borderRadius: radius.md,
-    paddingVertical: spacing.md,
-    alignItems: "center",
-  },
-  submitDisabled: {
-    opacity: 0.45,
-  },
-  submitPressed: {
-    opacity: 0.9,
-  },
-  submitText: {
-    ...typography.subtitle,
-    fontSize: 16,
-    color: colors.background,
-  },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    screen: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    form: {
+      padding: spacing.md,
+      paddingBottom: spacing.xl,
+    },
+    label: {
+      ...typography.caption,
+      color: c.textSecondary,
+      marginBottom: spacing.xs,
+      marginTop: spacing.sm,
+    },
+    input: {
+      ...typography.body,
+      color: c.text,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: radius.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+    },
+    inputMultiline: {
+      minHeight: 100,
+      textAlignVertical: "top",
+      paddingTop: spacing.sm,
+    },
+    submit: {
+      marginTop: spacing.lg,
+      backgroundColor: c.primary,
+      borderRadius: radius.md,
+      paddingVertical: spacing.md,
+      alignItems: "center",
+    },
+    submitDisabled: {
+      opacity: 0.45,
+    },
+    submitPressed: {
+      opacity: 0.9,
+    },
+    submitText: {
+      ...typography.subtitle,
+      fontSize: 16,
+      color: c.primaryFg,
+    },
+  });
+}

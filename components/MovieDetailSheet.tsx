@@ -1,7 +1,8 @@
 import { MySheet } from "./MySheet";
-import { colors, radius, spacing, typography } from "../constants/theme";
+import { Colors, useColors, radius, spacing, typography } from "../constants/theme";
 import type { Movie } from "../store/movies";
 import { useMoviesStore } from "../store/movies";
+import { useMemo } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 type MovieDetailSheetProps = {
@@ -25,6 +26,8 @@ function formatDate(iso: string): string {
 export function MovieDetailSheet({ movie, onClose }: MovieDetailSheetProps) {
   const setArchived = useMoviesStore((s) => s.setArchived);
   const deleteMovie = useMoviesStore((s) => s.deleteMovie);
+  const colors = useColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const toggleArchive = () => {
     if (!movie) return;
@@ -91,65 +94,67 @@ export function MovieDetailSheet({ movie, onClose }: MovieDetailSheetProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  meta: {
-    gap: spacing.xs,
-    marginBottom: spacing.md,
-  },
-  metaText: {
-    ...typography.body,
-    color: colors.text,
-  },
-  metaMuted: {
-    ...typography.caption,
-    color: colors.textMuted,
-  },
-  rating: {
-    ...typography.body,
-    color: colors.accent,
-    marginBottom: spacing.md,
-  },
-  notes: {
-    ...typography.body,
-    color: colors.text,
-    lineHeight: 22,
-    marginBottom: spacing.lg,
-  },
-  notesMuted: {
-    ...typography.caption,
-    color: colors.textMuted,
-    marginBottom: spacing.lg,
-  },
-  actions: {
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-  },
-  button: {
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    alignItems: "center",
-  },
-  buttonSecondary: {
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  buttonSecondaryText: {
-    ...typography.subtitle,
-    fontSize: 16,
-    color: colors.text,
-  },
-  buttonDanger: {
-    backgroundColor: "transparent",
-    borderWidth: 1,
-    borderColor: colors.danger,
-  },
-  buttonDangerText: {
-    ...typography.subtitle,
-    fontSize: 16,
-    color: colors.danger,
-  },
-  pressed: {
-    opacity: 0.85,
-  },
-});
+function makeStyles(c: Colors) {
+  return StyleSheet.create({
+    meta: {
+      gap: spacing.xs,
+      marginBottom: spacing.md,
+    },
+    metaText: {
+      ...typography.body,
+      color: c.text,
+    },
+    metaMuted: {
+      ...typography.caption,
+      color: c.textSecondary,
+    },
+    rating: {
+      ...typography.body,
+      color: c.primaryText,
+      marginBottom: spacing.md,
+    },
+    notes: {
+      ...typography.body,
+      color: c.text,
+      lineHeight: 22,
+      marginBottom: spacing.lg,
+    },
+    notesMuted: {
+      ...typography.caption,
+      color: c.textSecondary,
+      marginBottom: spacing.lg,
+    },
+    actions: {
+      gap: spacing.sm,
+      marginTop: spacing.sm,
+    },
+    button: {
+      paddingVertical: spacing.md,
+      borderRadius: radius.md,
+      alignItems: "center",
+    },
+    buttonSecondary: {
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    buttonSecondaryText: {
+      ...typography.subtitle,
+      fontSize: 16,
+      color: c.text,
+    },
+    buttonDanger: {
+      backgroundColor: "transparent",
+      borderWidth: 1,
+      borderColor: c.danger,
+    },
+    buttonDangerText: {
+      ...typography.subtitle,
+      fontSize: 16,
+      color: c.danger,
+    },
+    pressed: {
+      opacity: 0.85,
+    },
+  });
+}
