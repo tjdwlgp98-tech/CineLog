@@ -141,13 +141,13 @@ function makeStyles(c: Colors) {
       paddingBottom: spacing.xl,
     },
     label: {
-      ...typography.caption,
+      ...typography.label,
       color: c.textSecondary,
       marginBottom: spacing.xs,
       marginTop: spacing.sm,
     },
     input: {
-      ...typography.body,
+      ...typography.bodyLarge,
       color: c.text,
       backgroundColor: c.surface,
       borderWidth: 1,

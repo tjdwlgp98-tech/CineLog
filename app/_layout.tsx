@@ -1,4 +1,4 @@
-import { useColors } from "../constants/theme";
+import { typography, useColors } from "../constants/theme";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { StyleSheet, View, useColorScheme } from "react-native";
@@ -16,7 +16,7 @@ export default function RootLayout() {
           screenOptions={{
             headerStyle: { backgroundColor: colors.surface },
             headerTintColor: colors.text,
-            headerTitleStyle: { fontWeight: "600" },
+            headerTitleStyle: typography.subtitle,
             contentStyle: { backgroundColor: colors.background },
           }}
         >

@@ -106,11 +106,11 @@ function makeStyles(c: Colors) {
       marginBottom: spacing.xs,
     },
     cardMeta: {
-      ...typography.caption,
+      ...typography.bodyLarge,
       color: c.textSecondary,
     },
     cardRating: {
-      ...typography.caption,
+      ...typography.body,
       color: c.primaryText,
       marginTop: spacing.xs,
     },

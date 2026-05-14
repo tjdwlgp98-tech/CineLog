@@ -101,7 +101,7 @@ function makeStyles(c: Colors) {
       marginBottom: spacing.md,
     },
     metaText: {
-      ...typography.body,
+      ...typography.bodyLarge,
       color: c.text,
     },
     metaMuted: {
@@ -109,14 +109,13 @@ function makeStyles(c: Colors) {
       color: c.textSecondary,
     },
     rating: {
-      ...typography.body,
+      ...typography.bodyLarge,
       color: c.primaryText,
       marginBottom: spacing.md,
     },
     notes: {
-      ...typography.body,
+      ...typography.bodyLarge,
       color: c.text,
-      lineHeight: 22,
       marginBottom: spacing.lg,
     },
     notesMuted: {

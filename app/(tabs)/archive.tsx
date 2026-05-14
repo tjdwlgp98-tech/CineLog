@@ -105,7 +105,7 @@ function makeStyles(c: Colors) {
       marginBottom: spacing.xs,
     },
     cardMeta: {
-      ...typography.caption,
+      ...typography.bodyLarge,
       color: c.textSecondary,
     },
   });
