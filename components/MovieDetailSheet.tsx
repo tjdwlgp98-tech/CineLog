@@ -97,7 +97,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   metaText: {
-    ...typography.body,
+    ...typography.bodyLarge,
     color: colors.text,
   },
   metaMuted: {
@@ -105,14 +105,13 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
   },
   rating: {
-    ...typography.body,
+    ...typography.bodyLarge,
     color: colors.accent,
     marginBottom: spacing.md,
   },
   notes: {
-    ...typography.body,
+    ...typography.bodyLarge,
     color: colors.text,
-    lineHeight: 22,
     marginBottom: spacing.lg,
   },
   notesMuted: {
@@ -136,7 +135,6 @@ const styles = StyleSheet.create({
   },
   buttonSecondaryText: {
     ...typography.subtitle,
-    fontSize: 16,
     color: colors.text,
   },
   buttonDanger: {
@@ -146,7 +144,6 @@ const styles = StyleSheet.create({
   },
   buttonDangerText: {
     ...typography.subtitle,
-    fontSize: 16,
     color: colors.danger,
   },
   pressed: {

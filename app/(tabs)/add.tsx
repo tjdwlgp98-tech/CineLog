@@ -138,13 +138,13 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xl,
   },
   label: {
-    ...typography.caption,
+    ...typography.label,
     color: colors.textMuted,
     marginBottom: spacing.xs,
     marginTop: spacing.sm,
   },
   input: {
-    ...typography.body,
+    ...typography.bodyLarge,
     color: colors.text,
     backgroundColor: colors.surface,
     borderWidth: 1,
@@ -173,7 +173,6 @@ const styles = StyleSheet.create({
   },
   submitText: {
     ...typography.subtitle,
-    fontSize: 16,
     color: colors.background,
   },
 });

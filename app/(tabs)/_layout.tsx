@@ -1,4 +1,4 @@
-import { colors } from "../../constants/theme";
+import { colors, typography } from "../../constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 
@@ -14,7 +14,7 @@ export default function TabsLayout() {
         },
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.text,
-        headerTitleStyle: { fontWeight: "600" },
+        headerTitleStyle: typography.subtitle,
         headerShadowVisible: false,
       }}
     >

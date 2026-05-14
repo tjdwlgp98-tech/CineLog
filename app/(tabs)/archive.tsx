@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   cardMeta: {
-    ...typography.caption,
+    ...typography.body,
     color: colors.textMuted,
   },
 });
