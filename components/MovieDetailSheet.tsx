@@ -139,7 +139,6 @@ function makeStyles(c: Colors) {
     },
     buttonSecondaryText: {
       ...typography.subtitle,
-      fontSize: 16,
       color: c.text,
     },
     buttonDanger: {
@@ -149,7 +148,6 @@ function makeStyles(c: Colors) {
     },
     buttonDangerText: {
       ...typography.subtitle,
-      fontSize: 16,
       color: c.danger,
     },
     pressed: {
