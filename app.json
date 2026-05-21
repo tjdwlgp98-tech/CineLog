@@ -14,7 +14,8 @@
       "backgroundColor": "#0c0c0f"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cinelog.app"
     },
     "android": {
       "adaptiveIcon": {
