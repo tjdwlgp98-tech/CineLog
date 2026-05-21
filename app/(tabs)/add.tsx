@@ -61,23 +61,23 @@ export default function AddScreen() {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  const [query, setQuery] = useState("");
+  const [title, setTitle] = useState("");
   const [results, setResults] = useState<TmdbResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [noResults, setNoResults] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipSearchRef = useRef(false);
 
-  const [title, setTitle] = useState("");
   const [director, setDirector] = useState("");
   const [year, setYear] = useState("");
   const [rating, setRating] = useState(0);
   const [notes, setNotes] = useState("");
   const [watchedAt, setWatchedAt] = useState(todayStr());
 
-  // 디바운스 검색
   useEffect(() => {
+    if (skipSearchRef.current) { skipSearchRef.current = false; return; }
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (!query.trim()) {
+    if (!title.trim()) {
       setResults([]);
       setSearching(false);
       setNoResults(false);
@@ -86,7 +86,7 @@ export default function AddScreen() {
     setSearching(true);
     setNoResults(false);
     debounceRef.current = setTimeout(async () => {
-      const res = await searchTmdb(query);
+      const res = await searchTmdb(title);
       setResults(res);
       setNoResults(res.length === 0);
       setSearching(false);
@@ -94,15 +94,15 @@ export default function AddScreen() {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query]);
+  }, [title]);
 
   async function selectMovie(movie: TmdbResult) {
-    setQuery("");
+    skipSearchRef.current = true;
+    setTitle(movie.title);
     setResults([]);
     setNoResults(false);
-    setTitle(movie.title);
     setYear(movie.release_date?.slice(0, 4) ?? "");
-    setDirector(""); // 먼저 초기화
+    setDirector("");
     const dir = await fetchDirector(movie.id);
     setDirector(dir);
   }
@@ -141,13 +141,13 @@ export default function AddScreen() {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.form}
       >
-        {/* ── TMDB 검색 ─────────────────────────── */}
-        <Text style={styles.sectionHeading}>영화 검색</Text>
+        {/* ── 제목 / TMDB 검색 ─────────────────── */}
+        <Text style={styles.label}>제목</Text>
         <View style={styles.searchRow}>
           <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder="제목으로 검색…"
+            value={title}
+            onChangeText={setTitle}
+            placeholder="영화 제목 입력 또는 검색…"
             placeholderTextColor={colors.textTertiary}
             style={[styles.input, { flex: 1 }]}
             returnKeyType="search"
@@ -162,7 +162,6 @@ export default function AddScreen() {
           )}
         </View>
 
-        {/* 검색 결과 드롭다운 */}
         {results.length > 0 && (
           <View style={styles.dropdown}>
             {results.map((m, idx) => (
@@ -188,21 +187,9 @@ export default function AddScreen() {
           </View>
         )}
 
-        {noResults && query.trim().length > 0 && (
+        {noResults && title.trim().length > 0 && (
           <Text style={styles.noResults}>검색 결과가 없어요.</Text>
         )}
-
-        {/* ── 영화 정보 ──────────────────────────── */}
-        <View style={styles.divider} />
-
-        <Text style={styles.label}>제목</Text>
-        <TextInput
-          value={title}
-          onChangeText={setTitle}
-          placeholder="영화 제목"
-          placeholderTextColor={colors.textTertiary}
-          style={styles.input}
-        />
 
         <Text style={styles.label}>감독 (선택)</Text>
         <TextInput
@@ -251,11 +238,11 @@ export default function AddScreen() {
           style={styles.input}
         />
 
-        <Text style={styles.label}>메모 (선택)</Text>
+        <Text style={styles.label}>한줄평 (선택)</Text>
         <TextInput
           value={notes}
           onChangeText={setNotes}
-          placeholder="감상, 함께 본 사람…"
+          placeholder="한 줄로 남기는 감상…"
           placeholderTextColor={colors.textTertiary}
           multiline
           style={[styles.input, styles.inputMultiline]}
@@ -281,13 +268,6 @@ function makeStyles(c: Colors) {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: c.background },
     form: { padding: spacing.md, paddingBottom: spacing.xl },
-
-    sectionHeading: {
-      ...typography.subtitle,
-      color: c.text,
-      marginBottom: spacing.sm,
-      marginTop: spacing.xs,
-    },
 
     searchRow: {
       flexDirection: "row",
@@ -330,12 +310,6 @@ function makeStyles(c: Colors) {
       color: c.textTertiary,
       marginTop: spacing.xs,
       paddingHorizontal: spacing.xs,
-    },
-
-    divider: {
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: c.border,
-      marginVertical: spacing.lg,
     },
 
     label: {
