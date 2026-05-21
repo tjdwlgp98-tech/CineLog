@@ -145,37 +145,38 @@ export default function LogScreen() {
 
               return (
                 <View key={ci} style={styles.cell}>
-                  {/* 날짜 숫자 */}
-                  <View style={styles.dateRow}>
-                    <View style={[styles.dateBadge, isToday && { backgroundColor: colors.primary }]}>
-                      <Text
-                        style={[
-                          styles.dateNum,
-                          !cell.isCurrentMonth && styles.dateNumFaded,
-                          ci === 0 && cell.isCurrentMonth && { color: colors.danger },
-                          ci === 6 && cell.isCurrentMonth && { color: "#4A9EFF" },
-                          isToday && { color: colors.primaryFg, fontWeight: "700" },
-                        ]}
-                      >
-                        {cell.day}
-                      </Text>
-                    </View>
-                    {extra > 0 && <Text style={styles.extraCount}>+{extra}</Text>}
-                  </View>
+                  {cell.isCurrentMonth && (
+                    <>
+                      <View style={styles.dateRow}>
+                        <View style={[styles.dateBadge, isToday && { backgroundColor: colors.primary }]}>
+                          <Text
+                            style={[
+                              styles.dateNum,
+                              ci === 0 && { color: colors.danger },
+                              ci === 6 && { color: "#4A9EFF" },
+                              isToday && { color: colors.primaryFg, fontWeight: "700" },
+                            ]}
+                          >
+                            {cell.day}
+                          </Text>
+                        </View>
+                        {extra > 0 && <Text style={styles.extraCount}>+{extra}</Text>}
+                      </View>
 
-                  {/* 영화 카드 */}
-                  {primary && (
-                    <Pressable
-                      onPress={() => setDetailMovie(primary)}
-                      style={({ pressed }) => [styles.movieCard, pressed && { opacity: 0.75 }]}
-                    >
-                      <Text style={styles.movieEmoji}>{getEmoji(primary.id)}</Text>
-                      {primary.rating != null && (
-                        <Text style={styles.stars}>
-                          {"★".repeat(primary.rating)}{"☆".repeat(5 - primary.rating)}
-                        </Text>
+                      {primary && (
+                        <Pressable
+                          onPress={() => setDetailMovie(primary)}
+                          style={({ pressed }) => [styles.movieCard, pressed && { opacity: 0.75 }]}
+                        >
+                          <Text style={styles.movieEmoji}>{getEmoji(primary.id)}</Text>
+                          {primary.rating != null && (
+                            <Text style={styles.stars}>
+                              {"★".repeat(primary.rating)}{"☆".repeat(5 - primary.rating)}
+                            </Text>
+                          )}
+                        </Pressable>
                       )}
-                    </Pressable>
+                    </>
                   )}
                 </View>
               );
