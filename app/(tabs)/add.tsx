@@ -2,10 +2,12 @@ import { Colors, useColors, radius, spacing, typography } from "../../constants/
 import { useMoviesStore } from "../../store/movies";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import {
   ActivityIndicator,
   Image,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -47,15 +49,6 @@ async function fetchDirector(movieId: number): Promise<string> {
   return dir?.name ?? "";
 }
 
-function todayStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function dateStrToIso(s: string): string {
-  const d = new Date(s + "T12:00:00");
-  return isNaN(d.getTime()) ? new Date().toISOString() : d.toISOString();
-}
 
 export default function AddScreen() {
   const router = useRouter();
@@ -69,12 +62,15 @@ export default function AddScreen() {
   const [noResults, setNoResults] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipSearchRef = useRef(false);
+  const [confirmed, setConfirmed] = useState(false);
 
   const [director, setDirector] = useState("");
   const [year, setYear] = useState("");
   const [rating, setRating] = useState(0);
   const [notes, setNotes] = useState("");
-  const [watchedAt, setWatchedAt] = useState(todayStr());
+  const [watchedAt, setWatchedAt] = useState(new Date());
+  const [tempDate, setTempDate] = useState(new Date());
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [posterPath, setPosterPath] = useState<string | undefined>(undefined);
 
   useEffect(() => {
@@ -107,8 +103,19 @@ export default function AddScreen() {
     setYear(movie.release_date?.slice(0, 4) ?? "");
     setPosterPath(movie.poster_path ?? undefined);
     setDirector("");
+    setConfirmed(true);
     const dir = await fetchDirector(movie.id);
     setDirector(dir);
+  }
+
+  function resetSearch() {
+    setConfirmed(false);
+    setTitle("");
+    setPosterPath(undefined);
+    setDirector("");
+    setYear("");
+    setResults([]);
+    setNoResults(false);
   }
 
   function resetForm() {
@@ -117,8 +124,11 @@ export default function AddScreen() {
     setYear("");
     setRating(0);
     setNotes("");
-    setWatchedAt(todayStr());
+    setWatchedAt(new Date());
+    setTempDate(new Date());
+    setShowDatePicker(false);
     setPosterPath(undefined);
+    setConfirmed(false);
   }
 
   const submit = () => {
@@ -131,7 +141,7 @@ export default function AddScreen() {
       year: Number.isFinite(y) ? y : undefined,
       rating: rating > 0 ? rating : undefined,
       notes: notes.trim() || undefined,
-      watchedAt: dateStrToIso(watchedAt),
+      watchedAt: watchedAt.toISOString(),
       posterPath,
     });
     resetForm();
@@ -147,86 +157,107 @@ export default function AddScreen() {
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={styles.form}
       >
-        {/* ── 제목 / TMDB 검색 ─────────────────── */}
-        <Text style={styles.label}>제목</Text>
-        <View style={styles.searchRow}>
-          <TextInput
-            value={title}
-            onChangeText={setTitle}
-            placeholder="영화 제목 입력 또는 검색…"
-            placeholderTextColor={colors.textTertiary}
-            style={[styles.input, { flex: 1 }]}
-            returnKeyType="search"
-            autoCorrect={false}
-          />
-          {searching && (
-            <ActivityIndicator
-              color={colors.primary}
-              size="small"
-              style={styles.spinner}
-            />
-          )}
-        </View>
+        {/* ── 검색 모드 ─────────────────────────── */}
+        {!confirmed ? (
+          <>
+            <Text style={styles.label}>제목</Text>
+            <View style={styles.searchRow}>
+              <TextInput
+                value={title}
+                onChangeText={setTitle}
+                placeholder="영화 제목 입력 또는 검색…"
+                placeholderTextColor={colors.textTertiary}
+                style={[styles.input, { flex: 1 }]}
+                returnKeyType="search"
+                autoCorrect={false}
+                autoFocus
+              />
+              {searching && (
+                <ActivityIndicator
+                  color={colors.primary}
+                  size="small"
+                  style={styles.spinner}
+                />
+              )}
+            </View>
 
-        {results.length > 0 && (
-          <View style={styles.dropdown}>
-            {results.map((m, idx) => (
+            {results.length > 0 && (
+              <View style={styles.dropdown}>
+                {results.map((m, idx) => (
+                  <Pressable
+                    key={m.id}
+                    onPress={() => selectMovie(m)}
+                    style={({ pressed }) => [
+                      styles.dropdownItem,
+                      idx < results.length - 1 && styles.dropdownItemBorder,
+                      pressed && { backgroundColor: colors.surfaceElevated },
+                    ]}
+                  >
+                    {m.poster_path ? (
+                      <Image
+                        source={{ uri: `https://image.tmdb.org/t/p/w200${m.poster_path}` }}
+                        style={styles.poster}
+                      />
+                    ) : (
+                      <View style={[styles.poster, styles.posterFallback]}>
+                        <Text style={styles.posterFallbackText}>🎬</Text>
+                      </View>
+                    )}
+                    <View style={styles.dropdownInfo}>
+                      <Text style={styles.dropdownTitle} numberOfLines={1}>
+                        {m.title}
+                      </Text>
+                      {m.release_date ? (
+                        <Text style={styles.dropdownYear}>
+                          {m.release_date.slice(0, 4)}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+
+            {noResults && title.trim().length > 0 && (
+              <View style={styles.noResultsBox}>
+                <Text style={styles.noResults}>검색 결과가 없어요.</Text>
+                <Pressable
+                  onPress={() => setConfirmed(true)}
+                  style={({ pressed }) => [styles.registerBtn, pressed && { opacity: 0.7 }]}
+                >
+                  <Text style={styles.registerBtnText}>"{title}" 직접 등록하기</Text>
+                </Pressable>
+              </View>
+            )}
+          </>
+        ) : (
+          /* ── 선택 완료 모드 ───────────────────── */
+          <View style={styles.confirmedCard}>
+            {posterPath ? (
+              <Image
+                source={{ uri: `https://image.tmdb.org/t/p/w342${posterPath}` }}
+                style={styles.confirmedPoster}
+                resizeMode="cover"
+              />
+            ) : (
+              <View style={[styles.confirmedPoster, styles.confirmedPosterFallback]}>
+                <Text style={{ fontSize: 36 }}>🎬</Text>
+              </View>
+            )}
+            <View style={styles.confirmedInfo}>
+              <Text style={styles.confirmedTitle} numberOfLines={2}>{title}</Text>
+              {(director || year) ? (
+                <Text style={styles.movieMeta}>{[director, year].filter(Boolean).join(" · ")}</Text>
+              ) : null}
               <Pressable
-                key={m.id}
-                onPress={() => selectMovie(m)}
-                style={({ pressed }) => [
-                  styles.dropdownItem,
-                  idx < results.length - 1 && styles.dropdownItemBorder,
-                  pressed && { backgroundColor: colors.surfaceElevated },
-                ]}
+                onPress={resetSearch}
+                style={({ pressed }) => [styles.changeBtn, pressed && { opacity: 0.7 }]}
               >
-                {m.poster_path ? (
-                  <Image
-                    source={{ uri: `https://image.tmdb.org/t/p/w200${m.poster_path}` }}
-                    style={styles.poster}
-                  />
-                ) : (
-                  <View style={[styles.poster, styles.posterFallback]}>
-                    <Text style={styles.posterFallbackText}>🎬</Text>
-                  </View>
-                )}
-                <View style={styles.dropdownInfo}>
-                  <Text style={styles.dropdownTitle} numberOfLines={1}>
-                    {m.title}
-                  </Text>
-                  {m.release_date ? (
-                    <Text style={styles.dropdownYear}>
-                      {m.release_date.slice(0, 4)}
-                    </Text>
-                  ) : null}
-                </View>
+                <Text style={styles.changeBtnText}>영화 바꾸기</Text>
               </Pressable>
-            ))}
+            </View>
           </View>
         )}
-
-        {noResults && title.trim().length > 0 && (
-          <Text style={styles.noResults}>검색 결과가 없어요.</Text>
-        )}
-
-        <Text style={styles.label}>감독 (선택)</Text>
-        <TextInput
-          value={director}
-          onChangeText={setDirector}
-          placeholder="감독 이름"
-          placeholderTextColor={colors.textTertiary}
-          style={styles.input}
-        />
-
-        <Text style={styles.label}>개봉 연도 (선택)</Text>
-        <TextInput
-          value={year}
-          onChangeText={setYear}
-          placeholder="예: 2024"
-          placeholderTextColor={colors.textTertiary}
-          keyboardType="number-pad"
-          style={styles.input}
-        />
 
         {/* ── 별점 ──────────────────────────────── */}
         <Text style={styles.label}>별점</Text>
@@ -237,33 +268,56 @@ export default function AddScreen() {
               onPress={() => setRating(rating === s ? 0 : s)}
               style={styles.starBtn}
             >
-              <Text style={[styles.star, s <= rating && styles.starFilled]}>
-                ★
-              </Text>
+              <Text style={[styles.star, s <= rating && styles.starFilled]}>★</Text>
             </Pressable>
           ))}
         </View>
 
-        {/* ── 관람 정보 ──────────────────────────── */}
-        <Text style={styles.label}>관람일 (YYYY-MM-DD)</Text>
-        <TextInput
-          value={watchedAt}
-          onChangeText={setWatchedAt}
-          placeholder={todayStr()}
-          placeholderTextColor={colors.textTertiary}
-          autoCapitalize="none"
-          keyboardType="numbers-and-punctuation"
-          style={styles.input}
-        />
+        {/* ── 관람일 ─────────────────────────────── */}
+        <Text style={styles.label}>관람일</Text>
+        <Pressable
+          onPress={() => { setTempDate(watchedAt); setShowDatePicker(true); }}
+          style={({ pressed }) => [styles.dateBtn, pressed && { opacity: 0.7 }]}
+        >
+          <Text style={styles.dateBtnText}>
+            {watchedAt.toLocaleDateString("ko-KR", { year: "numeric", month: "long", day: "numeric", weekday: "short" })}
+          </Text>
+          <Text style={styles.dateBtnChevron}>›</Text>
+        </Pressable>
 
+        <Modal visible={showDatePicker} transparent animationType="slide">
+          <Pressable style={styles.modalBackdrop} onPress={() => setShowDatePicker(false)} />
+          <View style={styles.modalSheet}>
+            <View style={styles.modalToolbar}>
+              <Pressable onPress={() => setShowDatePicker(false)}>
+                <Text style={styles.modalCancel}>취소</Text>
+              </Pressable>
+              <Text style={styles.modalTitle}>관람일</Text>
+              <Pressable onPress={() => { setWatchedAt(tempDate); setShowDatePicker(false); }}>
+                <Text style={styles.modalDone}>완료</Text>
+              </Pressable>
+            </View>
+            <DateTimePicker
+              value={tempDate}
+              mode="date"
+              display="spinner"
+              locale="ko-KR"
+              maximumDate={new Date()}
+              onChange={(_, date) => { if (date) setTempDate(date); }}
+              style={styles.spinner}
+            />
+          </View>
+        </Modal>
+
+        {/* ── 한줄평 ─────────────────────────────── */}
         <Text style={styles.label}>한줄평 (선택)</Text>
         <TextInput
           value={notes}
           onChangeText={setNotes}
           placeholder="한 줄로 남기는 감상…"
           placeholderTextColor={colors.textTertiary}
-          multiline
-          style={[styles.input, styles.inputMultiline]}
+          returnKeyType="done"
+          style={styles.input}
         />
 
         <Pressable
@@ -338,11 +392,70 @@ function makeStyles(c: Colors) {
       color: c.textSecondary,
       marginTop: 2,
     },
+    noResultsBox: {
+      marginTop: spacing.sm,
+      gap: spacing.sm,
+    },
     noResults: {
       ...typography.body,
       color: c.textTertiary,
-      marginTop: spacing.xs,
       paddingHorizontal: spacing.xs,
+    },
+    registerBtn: {
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: radius.md,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      alignItems: "center",
+    },
+    registerBtnText: {
+      ...typography.body,
+      color: c.text,
+    },
+
+    confirmedCard: {
+      flexDirection: "row",
+      gap: spacing.md,
+      marginTop: spacing.xs,
+      marginBottom: spacing.sm,
+    },
+    confirmedPoster: {
+      width: 90,
+      height: 134,
+      borderRadius: radius.md,
+    },
+    confirmedPosterFallback: {
+      backgroundColor: c.surfaceElevated,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    confirmedInfo: {
+      flex: 1,
+      justifyContent: "center",
+      gap: spacing.xs,
+    },
+    confirmedTitle: {
+      ...typography.subtitle,
+      color: c.text,
+    },
+    movieMeta: {
+      ...typography.body,
+      color: c.textSecondary,
+    },
+    changeBtn: {
+      marginTop: spacing.xs,
+      alignSelf: "flex-start",
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: radius.sm,
+      paddingVertical: 4,
+      paddingHorizontal: spacing.sm,
+    },
+    changeBtnText: {
+      ...typography.caption,
+      color: c.textSecondary,
     },
 
     label: {
@@ -361,19 +474,73 @@ function makeStyles(c: Colors) {
       paddingHorizontal: spacing.md,
       paddingVertical: spacing.sm,
     },
-    inputMultiline: {
-      minHeight: 100,
-      textAlignVertical: "top",
-      paddingTop: spacing.sm,
+    dateBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: radius.md,
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
     },
-
+    dateBtnText: {
+      ...typography.bodyLarge,
+      color: c.text,
+    },
+    dateBtnChevron: {
+      fontSize: 18,
+      color: c.textTertiary,
+      fontWeight: "300",
+    },
+    modalBackdrop: {
+      flex: 1,
+      backgroundColor: "rgba(0,0,0,0.4)",
+    },
+    modalSheet: {
+      backgroundColor: c.surface,
+      borderTopLeftRadius: radius.lg,
+      borderTopRightRadius: radius.lg,
+      paddingBottom: 34,
+    },
+    modalToolbar: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: spacing.md,
+      paddingVertical: spacing.sm,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: c.border,
+    },
+    modalTitle: {
+      ...typography.subtitle,
+      color: c.text,
+    },
+    modalCancel: {
+      ...typography.body,
+      color: c.textSecondary,
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.xs,
+    },
+    modalDone: {
+      ...typography.body,
+      color: c.primary,
+      fontWeight: "600",
+      paddingVertical: spacing.xs,
+      paddingHorizontal: spacing.xs,
+    },
+    spinner: {
+      width: "100%",
+    },
     starRow: {
       flexDirection: "row",
-      gap: spacing.xs,
+      justifyContent: "space-between",
       marginTop: spacing.xs,
+      paddingHorizontal: spacing.xs,
     },
-    starBtn: { padding: 4 },
-    star: { fontSize: 28, color: c.border },
+    starBtn: { padding: 6 },
+    star: { fontSize: 40, color: c.border },
     starFilled: { color: c.primary },
 
     submit: {
