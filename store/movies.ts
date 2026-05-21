@@ -9,6 +9,7 @@ export type Movie = {
   notes?: string;
   watchedAt: string;
   archived: boolean;
+  posterPath?: string;
 };
 
 type MoviesState = {

@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -22,6 +23,7 @@ type TmdbResult = {
   title: string;
   release_date?: string;
   overview?: string;
+  poster_path?: string | null;
 };
 
 async function searchTmdb(query: string): Promise<TmdbResult[]> {
@@ -73,6 +75,7 @@ export default function AddScreen() {
   const [rating, setRating] = useState(0);
   const [notes, setNotes] = useState("");
   const [watchedAt, setWatchedAt] = useState(todayStr());
+  const [posterPath, setPosterPath] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     if (skipSearchRef.current) { skipSearchRef.current = false; return; }
@@ -102,6 +105,7 @@ export default function AddScreen() {
     setResults([]);
     setNoResults(false);
     setYear(movie.release_date?.slice(0, 4) ?? "");
+    setPosterPath(movie.poster_path ?? undefined);
     setDirector("");
     const dir = await fetchDirector(movie.id);
     setDirector(dir);
@@ -114,6 +118,7 @@ export default function AddScreen() {
     setRating(0);
     setNotes("");
     setWatchedAt(todayStr());
+    setPosterPath(undefined);
   }
 
   const submit = () => {
@@ -127,6 +132,7 @@ export default function AddScreen() {
       rating: rating > 0 ? rating : undefined,
       notes: notes.trim() || undefined,
       watchedAt: dateStrToIso(watchedAt),
+      posterPath,
     });
     resetForm();
     router.push("/");
@@ -174,14 +180,26 @@ export default function AddScreen() {
                   pressed && { backgroundColor: colors.surfaceElevated },
                 ]}
               >
-                <Text style={styles.dropdownTitle} numberOfLines={1}>
-                  {m.title}
-                </Text>
-                {m.release_date ? (
-                  <Text style={styles.dropdownYear}>
-                    {m.release_date.slice(0, 4)}
+                {m.poster_path ? (
+                  <Image
+                    source={{ uri: `https://image.tmdb.org/t/p/w200${m.poster_path}` }}
+                    style={styles.poster}
+                  />
+                ) : (
+                  <View style={[styles.poster, styles.posterFallback]}>
+                    <Text style={styles.posterFallbackText}>🎬</Text>
+                  </View>
+                )}
+                <View style={styles.dropdownInfo}>
+                  <Text style={styles.dropdownTitle} numberOfLines={1}>
+                    {m.title}
                   </Text>
-                ) : null}
+                  {m.release_date ? (
+                    <Text style={styles.dropdownYear}>
+                      {m.release_date.slice(0, 4)}
+                    </Text>
+                  ) : null}
+                </View>
               </Pressable>
             ))}
           </View>
@@ -287,23 +305,38 @@ function makeStyles(c: Colors) {
     dropdownItem: {
       flexDirection: "row",
       alignItems: "center",
-      justifyContent: "space-between",
-      paddingHorizontal: spacing.md,
-      paddingVertical: 12,
+      paddingHorizontal: spacing.sm,
+      paddingVertical: spacing.sm,
     },
     dropdownItemBorder: {
       borderBottomWidth: StyleSheet.hairlineWidth,
       borderBottomColor: c.border,
     },
+    poster: {
+      width: 36,
+      height: 54,
+      borderRadius: radius.sm,
+      marginRight: spacing.sm,
+    },
+    posterFallback: {
+      backgroundColor: c.surfaceElevated,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    posterFallbackText: {
+      fontSize: 18,
+    },
+    dropdownInfo: {
+      flex: 1,
+    },
     dropdownTitle: {
       ...typography.bodyLarge,
       color: c.text,
-      flex: 1,
-      marginRight: spacing.sm,
     },
     dropdownYear: {
       ...typography.body,
       color: c.textSecondary,
+      marginTop: 2,
     },
     noResults: {
       ...typography.body,

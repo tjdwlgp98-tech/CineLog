@@ -5,6 +5,7 @@ import { useMoviesStore } from "../../store/movies";
 import { useMemo, useState } from "react";
 import {
   Dimensions,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -168,11 +169,14 @@ export default function LogScreen() {
                           onPress={() => setDetailMovie(primary)}
                           style={({ pressed }) => [styles.movieCard, pressed && { opacity: 0.75 }]}
                         >
-                          <Text style={styles.movieEmoji}>{getEmoji(primary.id)}</Text>
-                          {primary.rating != null && (
-                            <Text style={styles.stars}>
-                              {"★".repeat(primary.rating)}{"☆".repeat(5 - primary.rating)}
-                            </Text>
+                          {primary.posterPath ? (
+                            <Image
+                              source={{ uri: `https://image.tmdb.org/t/p/w200${primary.posterPath}` }}
+                              style={styles.moviePoster}
+                              resizeMode="cover"
+                            />
+                          ) : (
+                            <Text style={styles.movieEmoji}>{getEmoji(primary.id)}</Text>
                           )}
                         </Pressable>
                       )}
@@ -262,23 +266,21 @@ function makeStyles(c: Colors) {
     },
 
     movieCard: {
-      backgroundColor: c.surface,
       borderRadius: radius.sm,
-      alignItems: "center",
-      justifyContent: "center",
-      paddingVertical: 6,
-      paddingHorizontal: 2,
+      overflow: "hidden",
       flex: 1,
+    },
+    moviePoster: {
+      width: "100%",
+      height: "100%",
+      borderRadius: radius.sm,
     },
     movieEmoji: {
       fontSize: 24,
       lineHeight: 30,
-    },
-    stars: {
-      fontSize: 7,
-      color: c.primary,
-      letterSpacing: 0.5,
-      marginTop: 3,
+      textAlign: "center",
+      flex: 1,
+      paddingTop: 10,
     },
   });
 }
