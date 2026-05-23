@@ -1,4 +1,6 @@
+import { AddMovieSheet } from "../../components/AddMovieSheet";
 import { MovieDetailSheet } from "../../components/MovieDetailSheet";
+import { MyProfileSheet } from "../../components/MyProfileSheet";
 import { Colors, useColors, radius, spacing, typography } from "../../constants/theme";
 import type { Movie } from "../../store/movies";
 import { useMoviesStore } from "../../store/movies";
@@ -12,6 +14,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const WEEK_DAYS = ["일", "월", "화", "수", "목", "금", "토"];
 const SCREEN_WIDTH = Dimensions.get("window").width;
@@ -52,14 +55,17 @@ function getTodayKey(): string {
 export default function LogScreen() {
   const movies = useMoviesStore((s) => s.movies);
   const [detailMovie, setDetailMovie] = useState<Movie | null>(null);
+  const [addDate, setAddDate] = useState<Date | null>(null);
+  const [showProfile, setShowProfile] = useState(false);
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
 
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
 
-  const active = useMemo(() => movies.filter((m) => !m.archived), [movies]);
+  const active = useMemo(() => movies, [movies]);
 
   const moviesByDate = useMemo(() => {
     const map: Record<string, Movie[]> = {};
@@ -107,6 +113,20 @@ export default function LogScreen() {
 
   return (
     <View style={styles.screen}>
+      {/* 커스텀 헤더 */}
+      <View style={[styles.customHeader, { paddingTop: insets.top + 8 }]}>
+        <Text style={styles.logo}>
+          <Text style={styles.logoFilm}>film</Text>
+          <Text style={styles.logoLog}>log</Text>
+        </Text>
+        <Pressable
+          onPress={() => setShowProfile(true)}
+          style={({ pressed }) => [styles.profileBtn, pressed && { opacity: 0.7 }]}
+        >
+          <View style={styles.profileBtnInner} />
+        </Pressable>
+      </View>
+
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* 월 네비게이션 */}
         <View style={styles.header}>
@@ -148,7 +168,13 @@ export default function LogScreen() {
                 <View key={ci} style={styles.cell}>
                   {cell.isCurrentMonth && (
                     <>
-                      <View style={styles.dateRow}>
+                      <Pressable
+                        style={styles.dateRow}
+                        onPress={() => {
+                          const d = new Date(year, month, cell.day);
+                          setAddDate(d);
+                        }}
+                      >
                         <View style={[styles.dateBadge, isToday && { backgroundColor: colors.primary }]}>
                           <Text
                             style={[
@@ -162,7 +188,7 @@ export default function LogScreen() {
                           </Text>
                         </View>
                         {extra > 0 && <Text style={styles.extraCount}>+{extra}</Text>}
-                      </View>
+                      </Pressable>
 
                       {primary && (
                         <Pressable
@@ -189,6 +215,15 @@ export default function LogScreen() {
         ))}
       </ScrollView>
       <MovieDetailSheet movie={detailMovie} onClose={() => setDetailMovie(null)} />
+      <MyProfileSheet visible={showProfile} onClose={() => setShowProfile(false)} />
+      {addDate !== null && (
+        <AddMovieSheet
+          key={addDate.toISOString()}
+          visible
+          initialDate={addDate}
+          onClose={() => setAddDate(null)}
+        />
+      )}
     </View>
   );
 }
@@ -197,6 +232,43 @@ function makeStyles(c: Colors) {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: c.background },
     scroll: { paddingBottom: spacing.xl },
+
+    customHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: spacing.lg,
+      paddingBottom: spacing.sm,
+      backgroundColor: c.background,
+    },
+    logo: {
+      fontSize: 22,
+      fontWeight: "700",
+      letterSpacing: -0.5,
+    },
+    logoFilm: {
+      color: c.text,
+    },
+    logoLog: {
+      color: c.primary,
+    },
+    profileBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    profileBtnInner: {
+      width: 16,
+      height: 16,
+      borderWidth: 1.5,
+      borderColor: c.textSecondary,
+      borderRadius: 3,
+    },
 
     header: {
       flexDirection: "row",

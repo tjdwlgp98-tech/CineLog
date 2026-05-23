@@ -24,16 +24,9 @@ function formatDate(iso: string): string {
 }
 
 export function MovieDetailSheet({ movie, onClose }: MovieDetailSheetProps) {
-  const setArchived = useMoviesStore((s) => s.setArchived);
   const deleteMovie = useMoviesStore((s) => s.deleteMovie);
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-
-  const toggleArchive = () => {
-    if (!movie) return;
-    setArchived(movie.id, !movie.archived);
-    onClose();
-  };
 
   const remove = () => {
     if (!movie) return;
@@ -66,18 +59,6 @@ export function MovieDetailSheet({ movie, onClose }: MovieDetailSheetProps) {
           )}
           <View style={styles.actions}>
             <Pressable
-              onPress={toggleArchive}
-              style={({ pressed }) => [
-                styles.button,
-                styles.buttonSecondary,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Text style={styles.buttonSecondaryText}>
-                {movie.archived ? "Restore to log" : "Move to archive"}
-              </Text>
-            </Pressable>
-            <Pressable
               onPress={remove}
               style={({ pressed }) => [
                 styles.button,
@@ -85,7 +66,7 @@ export function MovieDetailSheet({ movie, onClose }: MovieDetailSheetProps) {
                 pressed && styles.pressed,
               ]}
             >
-              <Text style={styles.buttonDangerText}>Delete</Text>
+              <Text style={styles.buttonDangerText}>삭제</Text>
             </Pressable>
           </View>
         </>
