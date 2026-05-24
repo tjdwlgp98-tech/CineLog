@@ -60,16 +60,22 @@ export const useMoviesStore = create<MoviesState>((set, get) => ({
       .from("movies")
       .select("*")
       .order("watched_at", { ascending: false });
-    if (!error && data) {
+    if (error) {
+      console.error("[fetchMovies] error:", JSON.stringify(error));
+    } else if (data) {
       set({ movies: (data as DbRow[]).map(rowToMovie) });
     }
   },
 
   addMovie: async (input) => {
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) console.error("[addMovie] getUser error:", JSON.stringify(userError));
+    console.log("[addMovie] user id:", user?.id ?? "null");
+
     const movie: Movie = { id: generateId(), archived: false, ...input };
     set((s) => ({ movies: [movie, ...s.movies] }));
-    await supabase.from("movies").insert({
+
+    const { error } = await supabase.from("movies").insert({
       id: movie.id,
       title: movie.title,
       director: movie.director ?? null,
@@ -81,6 +87,11 @@ export const useMoviesStore = create<MoviesState>((set, get) => ({
       poster_path: movie.posterPath ?? null,
       user_id: user?.id ?? null,
     });
+    if (error) {
+      console.error("[addMovie] insert error:", JSON.stringify(error));
+    } else {
+      console.log("[addMovie] insert success:", movie.title);
+    }
   },
 
   updateMovie: async (id, patch) => {
