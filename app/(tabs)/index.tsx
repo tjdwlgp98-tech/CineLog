@@ -1,6 +1,7 @@
 import { AddMovieSheet } from "../../components/AddMovieSheet";
 import { DayMoviesSheet } from "../../components/DayMoviesSheet";
 import { MovieDetailSheet } from "../../components/MovieDetailSheet";
+import { MyProfileSheet } from "../../components/MyProfileSheet";
 import { Colors, useColors, radius, spacing, typography } from "../../constants/theme";
 import type { Movie } from "../../store/movies";
 import { useMoviesStore } from "../../store/movies";
@@ -58,6 +59,7 @@ export default function LogScreen() {
   const [editMovieId, setEditMovieId] = useState<string | null>(null);
   const [addDate, setAddDate] = useState<Date | null>(null);
   const [dayMoviesKey, setDayMoviesKey] = useState<string | null>(null);
+  const [showProfile, setShowProfile] = useState(false);
 
   const detailMovie = useMemo(
     () => movies.find((m) => m.id === detailMovieId) ?? null,
@@ -134,6 +136,12 @@ export default function LogScreen() {
           <Text style={styles.logoFilm}>Cine</Text>
           <Text style={styles.logoLog}>log</Text>
         </Text>
+        <Pressable
+          onPress={() => setShowProfile(true)}
+          style={({ pressed }) => [styles.profileBtn, pressed && { opacity: 0.7 }]}
+        >
+          <View style={styles.profileBtnInner} />
+        </Pressable>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -282,6 +290,7 @@ export default function LogScreen() {
           onClose={() => setEditMovieId(null)}
         />
       )}
+      <MyProfileSheet visible={showProfile} onClose={() => setShowProfile(false)} />
     </View>
   );
 }
@@ -303,6 +312,23 @@ function makeStyles(c: Colors) {
       fontSize: 22,
       fontWeight: "700",
       letterSpacing: -0.5,
+    },
+    profileBtn: {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      backgroundColor: c.surface,
+      borderWidth: 1,
+      borderColor: c.border,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    profileBtnInner: {
+      width: 16,
+      height: 16,
+      borderWidth: 1.5,
+      borderColor: c.textSecondary,
+      borderRadius: 3,
     },
     logoFilm: {
       color: c.text,
