@@ -1,6 +1,5 @@
 import { AddMovieSheet } from "../../components/AddMovieSheet";
 import { MovieDetailSheet } from "../../components/MovieDetailSheet";
-import { MyProfileSheet } from "../../components/MyProfileSheet";
 import { Colors, useColors, radius, spacing, typography } from "../../constants/theme";
 import type { Movie } from "../../store/movies";
 import { useMoviesStore } from "../../store/movies";
@@ -57,7 +56,6 @@ export default function LogScreen() {
   const [detailMovieId, setDetailMovieId] = useState<string | null>(null);
   const [editMovieId, setEditMovieId] = useState<string | null>(null);
   const [addDate, setAddDate] = useState<Date | null>(null);
-  const [showProfile, setShowProfile] = useState(false);
 
   const detailMovie = useMemo(
     () => movies.find((m) => m.id === detailMovieId) ?? null,
@@ -126,15 +124,9 @@ export default function LogScreen() {
       {/* 커스텀 헤더 */}
       <View style={[styles.customHeader, { paddingTop: insets.top + 8 }]}>
         <Text style={styles.logo}>
-          <Text style={styles.logoFilm}>film</Text>
+          <Text style={styles.logoFilm}>Cine</Text>
           <Text style={styles.logoLog}>log</Text>
         </Text>
-        <Pressable
-          onPress={() => setShowProfile(true)}
-          style={({ pressed }) => [styles.profileBtn, pressed && { opacity: 0.7 }]}
-        >
-          <View style={styles.profileBtnInner} />
-        </Pressable>
       </View>
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -235,7 +227,6 @@ export default function LogScreen() {
           setDetailMovieId(null);
         }}
       />
-      <MyProfileSheet visible={showProfile} onClose={() => setShowProfile(false)} />
       {addDate !== null && (
         <AddMovieSheet
           key={addDate.toISOString()}
@@ -280,24 +271,6 @@ function makeStyles(c: Colors) {
     logoLog: {
       color: c.primary,
     },
-    profileBtn: {
-      width: 36,
-      height: 36,
-      borderRadius: 18,
-      backgroundColor: c.surface,
-      borderWidth: 1,
-      borderColor: c.border,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    profileBtnInner: {
-      width: 16,
-      height: 16,
-      borderWidth: 1.5,
-      borderColor: c.textSecondary,
-      borderRadius: 3,
-    },
-
     header: {
       flexDirection: "row",
       alignItems: "center",

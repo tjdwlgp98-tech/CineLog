@@ -1,4 +1,5 @@
 import { MovieDetailSheet } from "../../components/MovieDetailSheet";
+import { AddMovieSheet } from "../../components/AddMovieSheet";
 import { Colors, useColors, radius, spacing, typography } from "../../constants/theme";
 import type { Movie } from "../../store/movies";
 import { useMoviesStore } from "../../store/movies";
@@ -13,6 +14,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 const SCREEN_WIDTH = Dimensions.get("window").width;
 const NUM_COLS = 3;
@@ -47,11 +49,31 @@ function getYearFilters(movies: Movie[]) {
 
 export default function ArchiveScreen() {
   const movies = useMoviesStore((s) => s.movies);
-  const [selected, setSelected] = useState<Movie | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [editMovieId, setEditMovieId] = useState<string | null>(null);
   const [ratingFilter, setRatingFilter] = useState<number | null>(null);
   const [yearFilter, setYearFilter] = useState<number | null>(null);
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  const insets = useSafeAreaInsets();
+
+  const selected = useMemo(() => movies.find((m) => m.id === selectedId) ?? null, [movies, selectedId]);
+  const editMovie = useMemo(() => movies.find((m) => m.id === editMovieId) ?? null, [movies, editMovieId]);
+
+  const stats = useMemo(() => {
+    const total = movies.length;
+    const rated = movies.filter((m) => m.rating != null);
+    const avgRating =
+      rated.length > 0
+        ? (rated.reduce((s, m) => s + (m.rating ?? 0), 0) / rated.length).toFixed(1)
+        : "-";
+    const now = new Date();
+    const thisMonth = movies.filter((m) => {
+      const [y, mo] = m.watchedAt.slice(0, 7).split("-").map(Number);
+      return y === now.getFullYear() && mo === now.getMonth() + 1;
+    }).length;
+    return { total, avgRating, thisMonth };
+  }, [movies]);
 
   const yearFilters = useMemo(() => getYearFilters(movies), [movies]);
 
@@ -71,11 +93,21 @@ export default function ArchiveScreen() {
   ];
 
   return (
-    <View style={styles.screen}>
-      {/* 헤더 카드 */}
-      <View style={styles.headerCard}>
-        <Text style={styles.headerLabel}>전체 영화 컬렉션</Text>
-        <Text style={styles.headerCount}>{movies.length}</Text>
+    <View style={[styles.screen, { paddingTop: insets.top }]}>
+      {/* 통계 카드 */}
+      <View style={styles.statsRow}>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{stats.total}</Text>
+          <Text style={styles.statLabel}>총 편수</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{stats.avgRating}</Text>
+          <Text style={styles.statLabel}>평균 평점</Text>
+        </View>
+        <View style={styles.statCard}>
+          <Text style={styles.statValue}>{stats.thisMonth}</Text>
+          <Text style={styles.statLabel}>이달 기록</Text>
+        </View>
       </View>
 
       {/* 필터 칩 */}
@@ -128,7 +160,7 @@ export default function ArchiveScreen() {
         }
         renderItem={({ item }) => (
           <Pressable
-            onPress={() => setSelected(item)}
+            onPress={() => setSelectedId(item.id)}
             style={({ pressed }) => [styles.card, pressed && { opacity: 0.8 }]}
           >
             {/* 포스터 / 이모지 */}
@@ -154,7 +186,22 @@ export default function ArchiveScreen() {
         )}
       />
 
-      <MovieDetailSheet movie={selected} onClose={() => setSelected(null)} />
+      <MovieDetailSheet
+        movie={selected}
+        onClose={() => setSelectedId(null)}
+        onEdit={() => {
+          setEditMovieId(selectedId);
+          setSelectedId(null);
+        }}
+      />
+      {editMovie !== null && (
+        <AddMovieSheet
+          key={`edit-${editMovie.id}`}
+          visible
+          editingMovie={editMovie}
+          onClose={() => setEditMovieId(null)}
+        />
+      )}
     </View>
   );
 }
@@ -163,17 +210,31 @@ function makeStyles(c: Colors) {
   return StyleSheet.create({
     screen: { flex: 1, backgroundColor: c.background },
 
-    headerCard: {
-      margin: spacing.md,
+    statsRow: {
+      flexDirection: "row",
+      gap: spacing.sm,
+      marginHorizontal: spacing.md,
+      marginTop: spacing.md,
       marginBottom: spacing.sm,
+    },
+    statCard: {
+      flex: 1,
       backgroundColor: c.surface,
       borderRadius: radius.md,
-      borderWidth: 1,
-      borderColor: c.border,
-      padding: spacing.md,
+      paddingVertical: spacing.md,
+      alignItems: "center",
     },
-    headerLabel: { ...typography.caption, color: c.textSecondary, marginBottom: 4 },
-    headerCount: { fontSize: 36, fontWeight: "700", color: c.primary, lineHeight: 42 },
+    statValue: {
+      fontSize: 24,
+      fontWeight: "700",
+      color: c.primary,
+      lineHeight: 30,
+    },
+    statLabel: {
+      ...typography.caption,
+      color: c.textSecondary,
+      marginTop: 2,
+    },
 
     filterScroll: {
       flexGrow: 0,
