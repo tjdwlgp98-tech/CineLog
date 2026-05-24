@@ -1,4 +1,5 @@
 import { AddMovieSheet } from "../../components/AddMovieSheet";
+import { DayMoviesSheet } from "../../components/DayMoviesSheet";
 import { MovieDetailSheet } from "../../components/MovieDetailSheet";
 import { Colors, useColors, radius, spacing, typography } from "../../constants/theme";
 import type { Movie } from "../../store/movies";
@@ -56,6 +57,7 @@ export default function LogScreen() {
   const [detailMovieId, setDetailMovieId] = useState<string | null>(null);
   const [editMovieId, setEditMovieId] = useState<string | null>(null);
   const [addDate, setAddDate] = useState<Date | null>(null);
+  const [dayMoviesKey, setDayMoviesKey] = useState<string | null>(null);
 
   const detailMovie = useMemo(
     () => movies.find((m) => m.id === detailMovieId) ?? null,
@@ -84,6 +86,11 @@ export default function LogScreen() {
     }
     return map;
   }, [active]);
+
+  const dayMoviesList = useMemo(
+    () => (dayMoviesKey ? (moviesByDate[dayMoviesKey] ?? []) : []),
+    [moviesByDate, dayMoviesKey]
+  );
 
   const todayKey = getTodayKey();
 
@@ -192,7 +199,15 @@ export default function LogScreen() {
                             {cell.day}
                           </Text>
                         </View>
-                        {extra > 0 && <Text style={styles.extraCount}>+{extra}</Text>}
+                        {extra > 0 && (
+                          <Pressable
+                            onPress={() => setDayMoviesKey(cell.dateKey)}
+                            style={styles.extraBadge}
+                            hitSlop={6}
+                          >
+                            <Text style={styles.extraCount}>+{extra}</Text>
+                          </Pressable>
+                        )}
                       </View>
 
                       {primary && (
@@ -219,6 +234,15 @@ export default function LogScreen() {
           </View>
         ))}
       </ScrollView>
+      <DayMoviesSheet
+        dateKey={dayMoviesKey}
+        movies={dayMoviesList}
+        onClose={() => setDayMoviesKey(null)}
+        onSelect={(movie) => {
+          setDayMoviesKey(null);
+          setDetailMovieId(movie.id);
+        }}
+      />
       <MovieDetailSheet
         movie={detailMovie}
         onClose={() => setDetailMovieId(null)}
@@ -332,10 +356,17 @@ function makeStyles(c: Colors) {
     dateNumFaded: {
       color: c.textTertiary,
     },
+    extraBadge: {
+      marginLeft: 2,
+      backgroundColor: c.primary + "33",
+      borderRadius: radius.sm,
+      paddingHorizontal: 3,
+      paddingVertical: 1,
+    },
     extraCount: {
       fontSize: 8,
-      color: c.textTertiary,
-      marginLeft: 2,
+      fontWeight: "700",
+      color: c.primary,
     },
 
     movieCard: {
