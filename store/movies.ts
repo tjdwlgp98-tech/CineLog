@@ -1,6 +1,5 @@
 import { supabase } from "../lib/supabase";
 import { create } from "zustand";
-import { useAuthStore } from "./auth";
 
 export type Movie = {
   id: string;
@@ -67,7 +66,7 @@ export const useMoviesStore = create<MoviesState>((set, get) => ({
   },
 
   addMovie: async (input) => {
-    const session = useAuthStore.getState().session;
+    const { data: { user } } = await supabase.auth.getUser();
     const movie: Movie = { id: generateId(), archived: false, ...input };
     set((s) => ({ movies: [movie, ...s.movies] }));
     await supabase.from("movies").insert({
@@ -80,7 +79,7 @@ export const useMoviesStore = create<MoviesState>((set, get) => ({
       watched_at: movie.watchedAt,
       archived: movie.archived,
       poster_path: movie.posterPath ?? null,
-      user_id: session?.user.id ?? null,
+      user_id: user?.id ?? null,
     });
   },
 

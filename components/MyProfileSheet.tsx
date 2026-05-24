@@ -1,7 +1,10 @@
 import { Colors, useColors, radius, spacing, typography } from "../constants/theme";
+import { supabase } from "../lib/supabase";
+import { useAuthStore } from "../store/auth";
 import { useMoviesStore } from "../store/movies";
 import { useMemo } from "react";
 import {
+  Alert,
   Modal,
   Pressable,
   StyleSheet,
@@ -10,9 +13,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const USER_NAME = "My filmlog";
-const USER_INITIAL = "F";
-
 type Props = {
   visible: boolean;
   onClose: () => void;
@@ -20,9 +20,15 @@ type Props = {
 
 export function MyProfileSheet({ visible, onClose }: Props) {
   const movies = useMoviesStore((s) => s.movies);
+  const session = useAuthStore((s) => s.session);
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
+
+  const userName = session?.user.user_metadata?.full_name
+    ?? session?.user.email
+    ?? "My filmlog";
+  const userInitial = userName.charAt(0).toUpperCase();
 
   const stats = useMemo(() => {
     const total = movies.length;
@@ -39,11 +45,19 @@ export function MyProfileSheet({ visible, onClose }: Props) {
     return { total, avgRating, thisMonth };
   }, [movies]);
 
-  const menuItems = [
-    { label: "나의 통계 보기" },
-    { label: "SNS 연결하기" },
-    { label: "설정" },
-  ];
+  function handleSignOut() {
+    Alert.alert("로그아웃", "정말 로그아웃 하시겠어요?", [
+      { text: "취소", style: "cancel" },
+      {
+        text: "로그아웃",
+        style: "destructive",
+        onPress: async () => {
+          onClose();
+          await supabase.auth.signOut();
+        },
+      },
+    ]);
+  }
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
@@ -55,11 +69,13 @@ export function MyProfileSheet({ visible, onClose }: Props) {
           {/* 프로필 */}
           <View style={styles.profile}>
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{USER_INITIAL}</Text>
+              <Text style={styles.avatarText}>{userInitial}</Text>
             </View>
-            <View>
-              <Text style={styles.userName}>{USER_NAME}</Text>
-              <Text style={styles.userSub}>영화를 기록 중</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.userName} numberOfLines={1}>{userName}</Text>
+              <Text style={styles.userSub} numberOfLines={1}>
+                {session?.user.email ?? "영화를 기록 중"}
+              </Text>
             </View>
           </View>
 
@@ -79,20 +95,13 @@ export function MyProfileSheet({ visible, onClose }: Props) {
             </View>
           </View>
 
-          {/* 메뉴 */}
-          <View style={styles.menu}>
-            {menuItems.map((item, i) => (
-              <View key={item.label}>
-                {i > 0 && <View style={styles.divider} />}
-                <Pressable
-                  style={({ pressed }) => [styles.menuItem, pressed && { opacity: 0.6 }]}
-                >
-                  <View style={styles.menuIcon} />
-                  <Text style={styles.menuLabel}>{item.label}</Text>
-                </Pressable>
-              </View>
-            ))}
-          </View>
+          {/* 로그아웃 */}
+          <Pressable
+            onPress={handleSignOut}
+            style={({ pressed }) => [styles.signOutBtn, pressed && { opacity: 0.7 }]}
+          >
+            <Text style={styles.signOutText}>로그아웃</Text>
+          </Pressable>
         </View>
       </View>
     </Modal>
@@ -177,33 +186,17 @@ function makeStyles(c: Colors) {
       marginTop: 2,
     },
 
-    menu: {
-      backgroundColor: c.surface,
+    signOutBtn: {
+      borderWidth: 1,
+      borderColor: c.danger,
       borderRadius: radius.md,
-      overflow: "hidden",
-    },
-    divider: {
-      height: StyleSheet.hairlineWidth,
-      backgroundColor: c.border,
-      marginHorizontal: spacing.md,
-    },
-    menuItem: {
-      flexDirection: "row",
-      alignItems: "center",
       paddingVertical: spacing.md,
-      paddingHorizontal: spacing.md,
-      gap: spacing.md,
+      alignItems: "center",
     },
-    menuIcon: {
-      width: 18,
-      height: 18,
-      borderWidth: 1.5,
-      borderColor: c.textSecondary,
-      borderRadius: 3,
-    },
-    menuLabel: {
+    signOutText: {
       ...typography.bodyLarge,
-      color: c.text,
+      color: c.danger,
+      fontWeight: "600",
     },
   });
 }
