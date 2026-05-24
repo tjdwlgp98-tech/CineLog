@@ -3,6 +3,7 @@ import { Colors, useColors, radius, spacing, typography } from "../constants/the
 import type { Movie } from "../store/movies";
 import { useMemo } from "react";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 const MOVIE_EMOJIS = [
   "🎬", "🎭", "🌊", "🍿", "🎥", "🌙", "⭐", "🔮",
@@ -26,9 +27,10 @@ type Props = {
   movies: Movie[];
   onClose: () => void;
   onSelect: (movie: Movie) => void;
+  onAdd: () => void;
 };
 
-export function DayMoviesSheet({ dateKey, movies, onClose, onSelect }: Props) {
+export function DayMoviesSheet({ dateKey, movies, onClose, onSelect, onAdd }: Props) {
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
@@ -37,6 +39,15 @@ export function DayMoviesSheet({ dateKey, movies, onClose, onSelect }: Props) {
       visible={dateKey !== null && movies.length > 0}
       onClose={onClose}
       title={dateKey ? formatDayLabel(dateKey) : ""}
+      rightAction={
+        <Pressable
+          onPress={onAdd}
+          style={({ pressed }) => [styles.addBtn, pressed && { opacity: 0.6 }]}
+        >
+          <Ionicons name="add" size={20} color={colors.primary} />
+          <Text style={styles.addBtnText}>추가하기</Text>
+        </Pressable>
+      }
     >
       <View style={styles.list}>
         {movies.map((movie, i) => (
@@ -124,6 +135,20 @@ function makeStyles(c: Colors) {
       fontSize: 12,
       color: c.primary,
       letterSpacing: 1,
+    },
+    addBtn: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 3,
+      paddingVertical: 4,
+      paddingHorizontal: 8,
+      borderRadius: radius.sm,
+      backgroundColor: c.primary + "22",
+    },
+    addBtnText: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: c.primary,
     },
   });
 }

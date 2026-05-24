@@ -173,15 +173,20 @@ export default function LogScreen() {
               const primary = dayMovies[0] ?? null;
               const extra = dayMovies.length - 1;
 
+              const hasMultiple = dayMovies.length >= 2;
+
               return (
                 <Pressable
                   key={ci}
                   style={styles.cell}
                   onPress={() => {
                     if (!cell.isCurrentMonth || !cell.dateKey) return;
-                    const [y, mo, d] = cell.dateKey.split("-").map(Number);
-                    const date = new Date(y, mo - 1, d);
-                    setAddDate(date);
+                    if (hasMultiple) {
+                      setDayMoviesKey(cell.dateKey);
+                    } else if (dayMovies.length === 0) {
+                      const [y, mo, d] = cell.dateKey.split("-").map(Number);
+                      setAddDate(new Date(y, mo - 1, d));
+                    }
                   }}
                 >
                   {cell.isCurrentMonth && (
@@ -199,20 +204,22 @@ export default function LogScreen() {
                             {cell.day}
                           </Text>
                         </View>
-                        {extra > 0 && (
-                          <Pressable
-                            onPress={() => setDayMoviesKey(cell.dateKey)}
-                            style={styles.extraBadge}
-                            hitSlop={6}
-                          >
-                            <Text style={styles.extraCount}>+{extra}</Text>
-                          </Pressable>
+                        {hasMultiple && (
+                          <View style={styles.extraBadge}>
+                            <Text style={styles.extraCount}>{dayMovies.length}</Text>
+                          </View>
                         )}
                       </View>
 
                       {primary && (
                         <Pressable
-                          onPress={() => setDetailMovieId(primary.id)}
+                          onPress={() => {
+                            if (hasMultiple) {
+                              setDayMoviesKey(cell.dateKey);
+                            } else {
+                              setDetailMovieId(primary.id);
+                            }
+                          }}
                           style={({ pressed }) => [styles.movieCard, pressed && { opacity: 0.75 }]}
                         >
                           {primary.posterPath ? (
@@ -241,6 +248,14 @@ export default function LogScreen() {
         onSelect={(movie) => {
           setDayMoviesKey(null);
           setDetailMovieId(movie.id);
+        }}
+        onAdd={() => {
+          const key = dayMoviesKey;
+          setDayMoviesKey(null);
+          if (key) {
+            const [y, mo, d] = key.split("-").map(Number);
+            setAddDate(new Date(y, mo - 1, d));
+          }
         }}
       />
       <MovieDetailSheet

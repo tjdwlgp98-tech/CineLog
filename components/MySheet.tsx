@@ -15,10 +15,11 @@ type MySheetProps = {
   visible: boolean;
   onClose: () => void;
   title?: string;
+  rightAction?: ReactNode;
   children: ReactNode;
 };
 
-export function MySheet({ visible, onClose, title, children }: MySheetProps) {
+export function MySheet({ visible, onClose, title, rightAction, children }: MySheetProps) {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const colors = useColors();
@@ -44,8 +45,11 @@ export function MySheet({ visible, onClose, title, children }: MySheetProps) {
           ]}
         >
           <View style={styles.handle} />
-          {title ? (
-            <Text style={[typography.subtitle, styles.title]}>{title}</Text>
+          {(title || rightAction) ? (
+            <View style={styles.titleRow}>
+              <Text style={[typography.subtitle, styles.titleText]}>{title ?? ""}</Text>
+              {rightAction ?? null}
+            </View>
           ) : null}
           <ScrollView
             showsVerticalScrollIndicator={false}
@@ -83,9 +87,15 @@ function makeStyles(c: Colors) {
       backgroundColor: c.border,
       marginBottom: spacing.md,
     },
-    title: {
-      color: c.text,
+    titleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
       marginBottom: spacing.md,
+    },
+    titleText: {
+      color: c.text,
+      flex: 1,
     },
   });
 }
