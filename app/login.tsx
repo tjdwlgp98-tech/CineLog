@@ -51,7 +51,7 @@ export default function LoginScreen() {
     <View style={styles.screen}>
       <View style={styles.top}>
         <Text style={styles.logo}>
-          <Text style={styles.logoFilm}>film</Text>
+          <Text style={styles.logoFilm}>Cine</Text>
           <Text style={styles.logoLog}>log</Text>
         </Text>
         <Text style={styles.tagline}>내 영화 기록을 한 곳에</Text>
