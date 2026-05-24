@@ -3,19 +3,21 @@ import { Colors, useColors, radius, spacing, typography } from "../constants/the
 import type { Movie } from "../store/movies";
 import { useMoviesStore } from "../store/movies";
 import { useMemo } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 
 type MovieDetailSheetProps = {
   movie: Movie | null;
   onClose: () => void;
+  onEdit: () => void;
 };
 
 function formatDate(iso: string): string {
   try {
-    const d = new Date(iso);
-    return d.toLocaleDateString(undefined, {
+    const [y, m, d] = iso.slice(0, 10).split("-").map(Number);
+    const date = new Date(y, m - 1, d);
+    return date.toLocaleDateString("ko-KR", {
       year: "numeric",
-      month: "short",
+      month: "long",
       day: "numeric",
     });
   } catch {
@@ -23,7 +25,7 @@ function formatDate(iso: string): string {
   }
 }
 
-export function MovieDetailSheet({ movie, onClose }: MovieDetailSheetProps) {
+export function MovieDetailSheet({ movie, onClose, onEdit }: MovieDetailSheetProps) {
   const deleteMovie = useMoviesStore((s) => s.deleteMovie);
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -35,36 +37,58 @@ export function MovieDetailSheet({ movie, onClose }: MovieDetailSheetProps) {
   };
 
   return (
-    <MySheet visible={movie != null} onClose={onClose} title={movie?.title}>
+    <MySheet visible={movie != null} onClose={onClose}>
       {movie ? (
         <>
-          <View style={styles.meta}>
-            {movie.year != null ? (
-              <Text style={styles.metaText}>{movie.year}</Text>
-            ) : null}
-            {movie.director ? (
-              <Text style={styles.metaText}>{movie.director}</Text>
-            ) : null}
-            <Text style={styles.metaMuted}>
-              Watched {formatDate(movie.watchedAt)}
-            </Text>
-          </View>
-          {movie.rating != null ? (
-            <Text style={styles.rating}>Rating: {movie.rating} / 5</Text>
+          {/* 포스터 */}
+          {movie.posterPath ? (
+            <View style={styles.posterWrapper}>
+              <Image
+                source={{ uri: `https://image.tmdb.org/t/p/w342${movie.posterPath}` }}
+                style={styles.poster}
+                resizeMode="cover"
+              />
+            </View>
           ) : null}
+
+          {/* 제목 */}
+          <Text style={styles.title} numberOfLines={3}>{movie.title}</Text>
+
+          {/* 메타 정보 */}
+          <View style={styles.meta}>
+            {(movie.director || movie.year) ? (
+              <Text style={styles.metaText}>
+                {[movie.director, movie.year].filter(Boolean).join(" · ")}
+              </Text>
+            ) : null}
+            <Text style={styles.metaMuted}>관람일 {formatDate(movie.watchedAt)}</Text>
+          </View>
+
+          {/* 별점 */}
+          {movie.rating != null ? (
+            <View style={styles.starRow}>
+              {[1, 2, 3, 4, 5].map((s) => (
+                <Text key={s} style={[styles.star, s <= movie.rating! && styles.starFilled]}>★</Text>
+              ))}
+            </View>
+          ) : null}
+
+          {/* 한줄평 */}
           {movie.notes ? (
             <Text style={styles.notes}>{movie.notes}</Text>
-          ) : (
-            <Text style={styles.notesMuted}>No notes</Text>
-          )}
+          ) : null}
+
+          {/* 액션 버튼 */}
           <View style={styles.actions}>
             <Pressable
+              onPress={onEdit}
+              style={({ pressed }) => [styles.button, styles.buttonSecondary, pressed && styles.pressed]}
+            >
+              <Text style={styles.buttonSecondaryText}>수정</Text>
+            </Pressable>
+            <Pressable
               onPress={remove}
-              style={({ pressed }) => [
-                styles.button,
-                styles.buttonDanger,
-                pressed && styles.pressed,
-              ]}
+              style={({ pressed }) => [styles.button, styles.buttonDanger, pressed && styles.pressed]}
             >
               <Text style={styles.buttonDangerText}>삭제</Text>
             </Pressable>
@@ -77,33 +101,55 @@ export function MovieDetailSheet({ movie, onClose }: MovieDetailSheetProps) {
 
 function makeStyles(c: Colors) {
   return StyleSheet.create({
+    posterWrapper: {
+      alignItems: "center",
+      marginBottom: spacing.md,
+    },
+    poster: {
+      width: 140,
+      height: 210,
+      borderRadius: radius.md,
+    },
+
+    title: {
+      ...typography.subtitle,
+      color: c.text,
+      fontSize: 18,
+      marginBottom: spacing.xs,
+    },
     meta: {
       gap: spacing.xs,
       marginBottom: spacing.md,
     },
     metaText: {
       ...typography.bodyLarge,
-      color: c.text,
+      color: c.textSecondary,
     },
     metaMuted: {
       ...typography.caption,
-      color: c.textSecondary,
+      color: c.textTertiary,
     },
-    rating: {
-      ...typography.bodyLarge,
-      color: c.primaryText,
+
+    starRow: {
+      flexDirection: "row",
+      gap: 4,
       marginBottom: spacing.md,
     },
+    star: {
+      fontSize: 22,
+      color: c.border,
+    },
+    starFilled: {
+      color: c.primary,
+    },
+
     notes: {
       ...typography.bodyLarge,
       color: c.text,
       marginBottom: spacing.lg,
+      lineHeight: 22,
     },
-    notesMuted: {
-      ...typography.caption,
-      color: c.textSecondary,
-      marginBottom: spacing.lg,
-    },
+
     actions: {
       gap: spacing.sm,
       marginTop: spacing.sm,

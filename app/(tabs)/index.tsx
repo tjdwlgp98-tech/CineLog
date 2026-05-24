@@ -54,9 +54,19 @@ function getTodayKey(): string {
 
 export default function LogScreen() {
   const movies = useMoviesStore((s) => s.movies);
-  const [detailMovie, setDetailMovie] = useState<Movie | null>(null);
+  const [detailMovieId, setDetailMovieId] = useState<string | null>(null);
+  const [editMovieId, setEditMovieId] = useState<string | null>(null);
   const [addDate, setAddDate] = useState<Date | null>(null);
   const [showProfile, setShowProfile] = useState(false);
+
+  const detailMovie = useMemo(
+    () => movies.find((m) => m.id === detailMovieId) ?? null,
+    [movies, detailMovieId]
+  );
+  const editMovie = useMemo(
+    () => movies.find((m) => m.id === editMovieId) ?? null,
+    [movies, editMovieId]
+  );
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
@@ -165,16 +175,19 @@ export default function LogScreen() {
               const extra = dayMovies.length - 1;
 
               return (
-                <View key={ci} style={styles.cell}>
+                <Pressable
+                  key={ci}
+                  style={styles.cell}
+                  onPress={() => {
+                    if (!cell.isCurrentMonth || !cell.dateKey) return;
+                    const [y, mo, d] = cell.dateKey.split("-").map(Number);
+                    const date = new Date(y, mo - 1, d);
+                    setAddDate(date);
+                  }}
+                >
                   {cell.isCurrentMonth && (
                     <>
-                      <Pressable
-                        style={styles.dateRow}
-                        onPress={() => {
-                          const d = new Date(year, month, cell.day);
-                          setAddDate(d);
-                        }}
-                      >
+                      <View style={styles.dateRow}>
                         <View style={[styles.dateBadge, isToday && { backgroundColor: colors.primary }]}>
                           <Text
                             style={[
@@ -188,11 +201,11 @@ export default function LogScreen() {
                           </Text>
                         </View>
                         {extra > 0 && <Text style={styles.extraCount}>+{extra}</Text>}
-                      </Pressable>
+                      </View>
 
                       {primary && (
                         <Pressable
-                          onPress={() => setDetailMovie(primary)}
+                          onPress={() => setDetailMovieId(primary.id)}
                           style={({ pressed }) => [styles.movieCard, pressed && { opacity: 0.75 }]}
                         >
                           {primary.posterPath ? (
@@ -208,13 +221,20 @@ export default function LogScreen() {
                       )}
                     </>
                   )}
-                </View>
+                </Pressable>
               );
             })}
           </View>
         ))}
       </ScrollView>
-      <MovieDetailSheet movie={detailMovie} onClose={() => setDetailMovie(null)} />
+      <MovieDetailSheet
+        movie={detailMovie}
+        onClose={() => setDetailMovieId(null)}
+        onEdit={() => {
+          setEditMovieId(detailMovieId);
+          setDetailMovieId(null);
+        }}
+      />
       <MyProfileSheet visible={showProfile} onClose={() => setShowProfile(false)} />
       {addDate !== null && (
         <AddMovieSheet
@@ -222,6 +242,14 @@ export default function LogScreen() {
           visible
           initialDate={addDate}
           onClose={() => setAddDate(null)}
+        />
+      )}
+      {editMovie !== null && (
+        <AddMovieSheet
+          key={`edit-${editMovie.id}`}
+          visible
+          editingMovie={editMovie}
+          onClose={() => setEditMovieId(null)}
         />
       )}
     </View>

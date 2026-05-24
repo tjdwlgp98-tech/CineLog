@@ -3,6 +3,7 @@ import { ReactNode, useMemo } from "react";
 import {
   Modal,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -46,7 +47,12 @@ export function MySheet({ visible, onClose, title, children }: MySheetProps) {
           {title ? (
             <Text style={[typography.subtitle, styles.title]}>{title}</Text>
           ) : null}
-          {children}
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {children}
+          </ScrollView>
         </View>
       </View>
     </Modal>

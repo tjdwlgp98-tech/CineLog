@@ -1,4 +1,5 @@
 import { Colors, useColors, radius, spacing, typography } from "../constants/theme";
+import type { Movie } from "../store/movies";
 import { useMoviesStore } from "../store/movies";
 import { useEffect, useMemo, useRef, useState } from "react";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -52,11 +53,13 @@ async function fetchDirector(movieId: number): Promise<string> {
 type Props = {
   visible: boolean;
   initialDate?: Date;
+  editingMovie?: Movie;
   onClose: () => void;
 };
 
-export function AddMovieSheet({ visible, initialDate, onClose }: Props) {
+export function AddMovieSheet({ visible, initialDate, editingMovie, onClose }: Props) {
   const addMovie = useMoviesStore((s) => s.addMovie);
+  const updateMovie = useMoviesStore((s) => s.updateMovie);
   const colors = useColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
@@ -80,11 +83,25 @@ export function AddMovieSheet({ visible, initialDate, onClose }: Props) {
 
   useEffect(() => {
     if (visible) {
-      const d = initialDate ?? new Date();
-      setWatchedAt(d);
-      setTempDate(d);
+      if (editingMovie) {
+        setTitle(editingMovie.title);
+        setDirector(editingMovie.director ?? "");
+        setYear(editingMovie.year?.toString() ?? "");
+        setRating(editingMovie.rating ?? 0);
+        setNotes(editingMovie.notes ?? "");
+        setPosterPath(editingMovie.posterPath);
+        setConfirmed(true);
+        const [ey, em, ed] = editingMovie.watchedAt.slice(0, 10).split("-").map(Number);
+        const date = new Date(ey, em - 1, ed);
+        setWatchedAt(date);
+        setTempDate(date);
+      } else {
+        const d = initialDate ?? new Date();
+        setWatchedAt(d);
+        setTempDate(d);
+      }
     }
-  }, [visible, initialDate]);
+  }, [visible, initialDate, editingMovie]);
 
   useEffect(() => {
     if (skipSearchRef.current) { skipSearchRef.current = false; return; }
@@ -152,15 +169,22 @@ export function AddMovieSheet({ visible, initialDate, onClose }: Props) {
     const t = title.trim();
     if (!t) return;
     const y = year.trim() ? parseInt(year.trim(), 10) : undefined;
-    addMovie({
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const localIso = `${watchedAt.getFullYear()}-${pad(watchedAt.getMonth() + 1)}-${pad(watchedAt.getDate())}T00:00:00.000`;
+    const patch = {
       title: t,
       director: director.trim() || undefined,
       year: Number.isFinite(y) ? y : undefined,
       rating: rating > 0 ? rating : undefined,
       notes: notes.trim() || undefined,
-      watchedAt: watchedAt.toISOString(),
+      watchedAt: localIso,
       posterPath,
-    });
+    };
+    if (editingMovie) {
+      updateMovie(editingMovie.id, patch);
+    } else {
+      addMovie(patch);
+    }
     resetForm();
     onClose();
   }
@@ -181,7 +205,7 @@ export function AddMovieSheet({ visible, initialDate, onClose }: Props) {
               <Pressable onPress={handleClose} style={styles.cancelBtn}>
                 <Text style={styles.cancelText}>취소</Text>
               </Pressable>
-              <Text style={styles.sheetTitle}>영화 추가</Text>
+              <Text style={styles.sheetTitle}>{editingMovie ? "영화 수정" : "영화 추가"}</Text>
               <Pressable
                 onPress={submit}
                 disabled={!title.trim()}
