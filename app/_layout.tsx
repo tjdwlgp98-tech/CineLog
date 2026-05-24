@@ -1,12 +1,19 @@
 import { typography, useColors } from "../constants/theme";
+import { useMoviesStore } from "../store/movies";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { useEffect } from "react";
 import { StyleSheet, View, useColorScheme } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function RootLayout() {
   const colors = useColors();
   const scheme = useColorScheme() ?? "dark";
+  const fetchMovies = useMoviesStore((s) => s.fetchMovies);
+
+  useEffect(() => {
+    fetchMovies();
+  }, []);
 
   return (
     <SafeAreaProvider>
